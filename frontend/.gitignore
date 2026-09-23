@@ -1,0 +1,6 @@
+
+# Impeccable decision-round logs (local session artifacts)
+.impeccable/questions/
+
+# Impeccable review captures (22MB of session evidence, regenerable)
+.impeccable/review/

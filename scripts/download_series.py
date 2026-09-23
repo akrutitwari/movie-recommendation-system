@@ -17,6 +17,7 @@ NETFLIX_ORIGINAL_TITLES = [
     'BoJack Horseman', 'The Queen\'s Gambit', 'Mindhunter', 'The Last Kingdom',
     'You', 'The Umbrella Academy', 'Sex Education', 'Never Have I Ever',
     'Heartstopper', 'One Piece', '3 Body Problem', 'The Night Agent',
+    'Anne with an E',
 ]
 
 def compact(show, netflix_original=False):

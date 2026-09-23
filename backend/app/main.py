@@ -32,5 +32,5 @@ def recommend(body: RecommendRequest, request: Request):
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     with ThreadPoolExecutor(max_workers=10) as executor:
-        recommendations = list(executor.map(lambda movie: enrich(movie, model.movies), recommendations))
+        recommendations = list(executor.map(enrich, recommendations))
     return {'recommendations': recommendations}

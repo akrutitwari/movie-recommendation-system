@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 124 140" width="124" height="140" role="img" aria-labelledby="cg-title cg-desc">
+  <title id="cg-title">The CineMatch guardian</title>
+  <desc id="cg-desc">A warrior bust whose helm is a 35mm film reel: six perforations in the reel face, the lower pair lit like eyes, a film-ribbon sword slung at his back.</desc>
+
+  <defs>
+    <linearGradient id="cg-armour" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#517c6b"/>
+      <stop offset="1" stop-color="#2b4c3f"/>
+    </linearGradient>
+    <linearGradient id="cg-plate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6a9585"/>
+      <stop offset="1" stop-color="#37604f"/>
+    </linearGradient>
+    <linearGradient id="cg-helm" x1="0.18" y1="0" x2="0.82" y2="1">
+      <stop offset="0" stop-color="#5c8877"/>
+      <stop offset="0.55" stop-color="#3c6555"/>
+      <stop offset="1" stop-color="#254236"/>
+    </linearGradient>
+    <linearGradient id="cg-blade" x1="0" y1="1" x2="0.9" y2="0">
+      <stop offset="0" stop-color="#2b4c3f"/>
+      <stop offset="0.45" stop-color="#8fbf6e"/>
+      <stop offset="1" stop-color="#c8e96f"/>
+    </linearGradient>
+    <radialGradient id="cg-glow">
+      <stop offset="0" stop-color="#c8e96f" stop-opacity="0.9"/>
+      <stop offset="0.45" stop-color="#c8e96f" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#c8e96f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- sword, slung behind the shoulder; dark spine keeps it legible on any ground -->
+  <g transform="rotate(21 62 72)">
+    <path d="M98 10 L105 24 L105 90 L91 90 L91 24 Z" fill="#12302a"/>
+    <path d="M98 13 L103 25 L103 88 L93 88 L93 25 Z" fill="url(#cg-blade)"/>
+    <path d="M98 14 L98 88" stroke="#12302a" stroke-width="1.2" opacity="0.45"/>
+    <rect x="79" y="89" width="38" height="7" rx="3.5" fill="#deb459"/>
+    <rect x="80.5" y="90.5" width="35" height="2" rx="1" fill="#f0d79a" opacity="0.7"/>
+    <rect x="94" y="96" width="8" height="20" rx="4" fill="#12302a"/>
+    <circle cx="98" cy="119" r="5" fill="#deb459"/>
+  </g>
+
+  <!-- cloak: lifted off the ground colour so it actually reads -->
+  <path d="M44 90 L14 136 L48 136 Z" fill="#12302a"/>
+  <path d="M80 90 L110 136 L76 136 Z" fill="#12302a"/>
+  <path d="M44 90 L14 136" fill="none" stroke="#25423e" stroke-width="1.5"/>
+  <path d="M80 90 L110 136" fill="none" stroke="#25423e" stroke-width="1.5"/>
+
+  <!-- neck -->
+  <rect x="54" y="76" width="16" height="18" rx="4" fill="#254236"/>
+
+  <!-- torso -->
+  <path d="M62 84 C77 84 88 93 91 106 L94 136 L30 136 L33 106 C36 93 47 84 62 84 Z" fill="url(#cg-armour)"/>
+  <path d="M62 94 L62 136" stroke="#12302a" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- pauldrons: faceted plates, not blobs -->
+  <path d="M33 106 L17 99 L9 110 L12 128 L32 128 Z" fill="url(#cg-plate)"/>
+  <path d="M91 106 L107 99 L115 110 L112 128 L92 128 Z" fill="url(#cg-plate)"/>
+  <path d="M33 106 L17 99 L9 110" fill="none" stroke="#83ac9b" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M91 106 L107 99 L115 110" fill="none" stroke="#83ac9b" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M17 99 L20 128" fill="none" stroke="#12302a" stroke-width="1.2" opacity="0.5"/>
+  <path d="M107 99 L104 128" fill="none" stroke="#12302a" stroke-width="1.2" opacity="0.5"/>
+
+  <!-- chest sigil: a single film frame -->
+  <rect x="54" y="106" width="16" height="13" rx="2" fill="#12302a"/>
+  <rect x="57.5" y="109" width="9" height="7" rx="1" fill="#c8e96f"/>
+
+  <!-- eye glow, behind the helm face -->
+  <circle cx="48.1" cy="60" r="17" fill="url(#cg-glow)"/>
+  <circle cx="75.9" cy="60" r="17" fill="url(#cg-glow)"/>
+
+  <!-- helm: the film reel, face on -->
+  <circle cx="62" cy="52" r="33" fill="url(#cg-helm)"/>
+  <circle cx="62" cy="52" r="33" fill="none" stroke="#6a9585" stroke-width="2.5"/>
+  <circle cx="62" cy="52" r="27.5" fill="none" stroke="#12302a" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- reel perforations; the lower pair are the eyes -->
+  <circle cx="62" cy="36" r="6" fill="#0d241d"/>
+  <circle cx="48.1" cy="44" r="6" fill="#0d241d"/>
+  <circle cx="75.9" cy="44" r="6" fill="#0d241d"/>
+  <circle cx="62" cy="68" r="6" fill="#0d241d"/>
+  <circle cx="48.1" cy="60" r="7.2" fill="#c8e96f"/>
+  <circle cx="75.9" cy="60" r="7.2" fill="#c8e96f"/>
+  <circle cx="48.1" cy="60" r="3" fill="#0d241d" opacity="0.6"/>
+  <circle cx="75.9" cy="60" r="3" fill="#0d241d" opacity="0.6"/>
+
+  <!-- axle hub, worn as a brow jewel -->
+  <circle cx="62" cy="52" r="5.5" fill="#deb459"/>
+  <circle cx="62" cy="52" r="2.4" fill="#0d241d"/>
+
+  <!-- crest, fitted inside the box -->
+  <path d="M62 19 L69.5 9 L62 1 L54.5 9 Z" fill="#deb459"/>
+  <path d="M62 19 L62 1" stroke="#0d241d" stroke-width="1" opacity="0.3"/>
+</svg>

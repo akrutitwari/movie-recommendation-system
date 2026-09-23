@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Search, Plus, LoaderCircle } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { searchMovies } from "@/lib/api";
 import type { Movie } from "@/types/movie";
 export default function MovieSearch({
@@ -105,7 +105,6 @@ export default function MovieSearch({
             }
           }}
         />
-        {loading && <LoaderCircle size={18} className="spin" />}
       </div>
       {open && query.trim() && (
         <div className="search-dropdown">
@@ -132,11 +131,7 @@ export default function MovieSearch({
                   <span>
                     <strong>{movie.title}</strong>
                     <small>
-                      {movie.netflix_original
-                        ? "Netflix Original"
-                        : movie.media_type === "series"
-                          ? "Series"
-                          : "Movie"} ·{" "}
+                      {movie.media_type === "series" ? "Series" : "Movie"} ·{" "}
                       {movie.year ?? "Year unknown"} ·{" "}
                       {movie.genres.join(" / ") || "Genres unavailable"}
                     </small>

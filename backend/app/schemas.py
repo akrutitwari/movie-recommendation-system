@@ -5,8 +5,7 @@ class Movie(BaseModel):
     id: int
     media_type: Literal["movie", "series"] = "movie"
     source_url: str | None = None
-    platform: str | None = None
-    netflix_original: bool = False
+    platforms: list[str] = []
     title: str
     year: int | None
     genres: list[str]
@@ -19,6 +18,7 @@ class Feature(BaseModel):
 
 class Recommendation(Movie):
     score: float = Field(ge=0, le=1)
+    content_score: float = Field(ge=0, le=1)
     shared_genres: list[str]
     shared_features: list[Feature]
     reasons: list[str]
@@ -27,13 +27,13 @@ class Recommendation(Movie):
 
 class RecommendRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    media_type: Literal["all", "movie", "series", "netflix"] = "all"
+    media_type: Literal["all", "movie", "series"] = "all"
     movie_ids: list[Annotated[StrictInt, Field(gt=0)]] = Field(min_length=1, max_length=5)
     limit: Annotated[StrictInt, Field(ge=1, le=20)] = 10
 
 class RecommendResponse(BaseModel):
     recommendations: list[Recommendation]
-    model: str = 'TF-IDF + cosine similarity'
+    model: str = 'Content similarity (TF-IDF + cosine) blended with popularity/recency'
 
 class Health(BaseModel):
     status: str

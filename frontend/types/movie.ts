@@ -2,8 +2,7 @@ export interface Movie {
   id: number;
   media_type: "movie" | "series";
   source_url: string | null;
-  platform: string | null;
-  netflix_original: boolean;
+  platforms: string[];
   title: string;
   year: number | null;
   genres: string[];
@@ -12,6 +11,7 @@ export interface Movie {
 }
 export interface Recommendation extends Movie {
   score: number;
+  content_score: number;
   shared_genres: string[];
   shared_features: { term: string; contribution: number }[];
   reasons: string[];
@@ -19,4 +19,4 @@ export interface Recommendation extends Movie {
   selected_titles: string[];
 }
 
-export type MediaFilter = "all" | "movie" | "series" | "netflix";
+export type MediaFilter = "all" | "movie" | "series";

@@ -23,43 +23,46 @@ Demo script: search “Interstellar” → select it → search “Inception” 
 
 Search and select both movies and TV series. Choose **Movies & series**, **Movies**, or **Series** under Recommend, then click **Find My Next Watch**. Filters change candidate results, while favorites may contain either type.
 
-Choose **Netflix Originals** to restrict recommendations to a curated starter set of 25 well-known Netflix original series, including Stranger Things, The Crown, Bridgerton, Wednesday, Dark, Narcos, Money Heist, Squid Game, The Witcher and Ozark. TVmaze does not provide a complete Netflix-original flag, so this set is intentionally transparent and non-exhaustive. Netflix availability varies by country and over time; the filter describes origin, not current streaming availability.
+**v2: the catalog is now live TMDB data, not a 2018 snapshot.** The original MovieLens+TVmaze pipeline (frozen at 2018, skewed toward obscure titles with no popularity signal) has been fully replaced by [`scripts/download_tmdb.py`](scripts/download_tmdb.py), which pulls popular, top-rated, and recently-released movies and TV shows straight from [TMDB](https://www.themoviedb.org/). This needs a free TMDB API key (see below) — get one at [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api). Series use a separate numeric namespace (`1,000,000,000 + TMDB TV id`) so they can never collide with movie IDs; movies keep their raw TMDB id.
 
-The running app now fits one joint catalog: 9,742 MovieLens movies plus 4,721 TVmaze series. TVmaze metadata is cached locally with `python scripts/download_series.py` (no key). The default 20 index pages cover show IDs below 5,000, plus the curated Netflix starter set; neither is the full TVmaze catalog. Use `--pages N` to expand general coverage and restart the backend. Series summaries/posters are display-only; Science-Fiction is normalized to Sci-Fi for matching.
+Ranking now blends **content similarity (70%)** with **current popularity (15%)** and **recency (15%, exponential decay with a 6-year half-life)** — so two equally genre-matched titles will favor the one that's actually popular right now and/or recently released, instead of an arbitrary decades-old title winning purely because it shares genre words. The raw content-only score is still exposed as `content_score` for transparency, and every result's `shared_features` still sum to that content score exactly, not the final blended one.
 
-TVmaze data is attributed per series and in the footer under [CC BY-SA](https://www.tvmaze.com/api#licensing). The downloaded cache retains source links; its checksum/coverage is recorded in `backend/data/series-manifest.json`. Data terms are separate from application code.
+Each of the (typically ten) titles actually returned by a request also gets a live, no-extra-cost lookup of **real streaming platforms** (`platforms`, e.g. `["Netflix", "Amazon Prime Video"]`) via TMDB's `watch/providers` endpoint, restricted to subscription ("flatrate") availability in the US region. This is a per-request lookup on the small result set, not baked into the whole catalog, so it's fast and stays current — TMDB's data reflects today's actual availability, not a fixed history.
 
-New endpoint: `GET /titles/search?q=breaking`; `/movies/search` remains a compatibility alias for unified search. `POST /recommend` accepts optional `media_type` (`all`, `movie`, `series`). The existing `movie_ids` field now accepts catalog IDs for either type: movies keep MovieLens IDs, series use 1,000,000,000 + TVmaze ID. Always use IDs returned by search. Health reports movies, series and total titles.
+The old curated "Netflix Originals" filter (based on a hand-picked title list and TVmaze's incomplete originals flag) has been removed along with the MovieLens/TVmaze pipeline; genuine current platform availability is now shown per-result instead.
 
-**Learning baseline:** the notebook, evaluation report and numerical example below intentionally preserve the original movie-only model. Live joint-catalog scores differ because TF-IDF learns IDF across both datasets.
+`GET /titles/search?q=breaking` (with `/movies/search` as a compatibility alias) and `POST /recommend` (`media_type`: `all`, `movie`, `series`) both use TMDB-sourced catalog IDs now — always use IDs returned by search. Health reports movies, series and total titles from the live catalog.
+
+**Learning baseline:** the notebook, evaluation report and the numerical walkthrough further below were built against the original 2018 MovieLens-only model and are preserved as a historical/pedagogical artifact — they no longer reflect the live app's catalog or scoring, since that catalog and the ranking formula have both changed.
 
 ## Features
 
 - Debounced title autocomplete with keyboard navigation, cancellation, and no-result feedback.
 - One to five removable favorites; guidance encourages three to five.
-- Ten positive content matches, excluding selected films, with deterministic tie-breaking.
-- Real 0–1 cosine scores, displayed as percentages; no fabricated confidence.
-- Genre overlaps and per-term score contributions in expandable explanations.
+- Content matches blended with a popularity/recency boost, excluding selected titles, with deterministic tie-breaking.
+- Real 0–1 blended scores displayed as percentages, plus a separate raw content-similarity score; no fabricated confidence.
+- Live "streaming on Netflix/Prime/etc." tags per result, alongside genre overlaps and per-term score contributions in expandable explanations.
 - Responsive editorial interface, original cinematic genre artwork, and accessible loading/error states.
-- Optional TMDB posters/synopses; fully functional recommendations without a key.
-- `/how-it-works` educational page, executed notebook, learning guide and descriptive evaluation.
+- Real TMDB posters/synopses baked into the catalog at download time — no key needed at request time for artwork, only for the offline refresh and live platform lookups.
+- `/how-it-works` educational page, executed notebook, learning guide and descriptive evaluation (documenting the original, now-superseded, MovieLens-only model).
 
 ## ML concepts and pipeline
 
 ```mermaid
 flowchart LR
-  A[MovieLens titles + genres] --> B[Clean metadata]
+  A[TMDB popular/top-rated/recent titles] --> B[Clean metadata]
   B --> C[TF-IDF sparse matrix]
-  D[Selected movie IDs] --> E[Average favorite vectors]
+  D[Selected title IDs] --> E[Average favorite vectors]
   C --> E
   E --> F[Cosine similarity to catalog]
-  F --> G[Exclude favorites and rank]
-  G --> H[Top 10 and term contributions]
+  F --> G[Blend with popularity + recency]
+  G --> H[Exclude favorites and rank]
+  H --> I[Top N and term contributions]
 ```
 
-Preprocessing extracts release years, normalizes punctuation/case, treats Sci-Fi as a single token and removes IMAX (format, not content). Genres are repeated three times before vectorization to emphasize them over incidental title words. This weighting is an explicit initial design choice, not an optimized result.
+Preprocessing normalizes punctuation/case and removes nothing content-bearing; genres are repeated three times before vectorization to emphasize them over incidental title words. This weighting is an explicit initial design choice, not an optimized result.
 
-TF-IDF uses English stop words, Unicode accent stripping, smoothed IDF and L2 normalization. The fitted matrix has **9,742 movies × 8,914 terms** for the downloaded snapshot. Averaging selected rows creates the taste vector. We compare only this profile to the catalog, avoiding a quadratic all-pairs matrix.
+TF-IDF uses English stop words, Unicode accent stripping, smoothed IDF and L2 normalization. Averaging selected rows creates the taste vector; comparing only this profile to the catalog avoids a quadratic all-pairs matrix. The blended score is `0.7 × cosine + 0.15 × normalized popularity + 0.15 × recency`, clipped to `[0, 1]`; the constants live in [`recommender.py`](backend/app/recommender.py).
 
 ## Architecture and technology
 
@@ -68,8 +71,8 @@ flowchart TB
   UI[React + TypeScript + Tailwind / Next.js] -->|same-origin /api requests| Proxy[Next.js rewrite]
   Proxy --> API[FastAPI + Pydantic]
   API --> ML[recommender.py / scikit-learn + NumPy]
-  CSV[MovieLens CSV / pandas] --> ML
-  API -. optional display enrichment .-> TMDB[TMDB details API]
+  JSON[TMDB catalog JSON / pandas] --> ML
+  API -. per-result platform lookup .-> TMDB[TMDB watch/providers API]
 ```
 
 Python serves the model. React owns interaction state. Data preparation, ranking, API validation, enrichment and presentation are separate. There is no database, authentication, paid model service or persistent recommendation history.
@@ -84,19 +87,13 @@ From the repository root:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r backend/requirements.txt
-python scripts/download_data.py
-python scripts/download_series.py
+export TMDB_API_KEY=your_key_here   # free at themoviedb.org/settings/api
+python scripts/download_tmdb.py
 ```
 
-If the official dataset host is unavailable, use the explicitly pinned HTTPS mirror:
+The download takes a couple of minutes and fetches ~100 pages each of popular, top-rated, and recently-released movies and TV shows (deduplicated), saved to `backend/data/tmdb_catalog.json` (git-ignored, like the old datasets were — regenerate any time with the same command). Re-run it periodically to keep recommendations current; `--pages N` widens or narrows how much of TMDB's catalog gets pulled per list.
 
-```bash
-python scripts/download_data.py --mirror
-```
-
-The local build used this mirror because the official host presented an expired certificate. TLS verification remains enabled. The script retains original usage terms and records checksums/source in `backend/data/manifest.json`.
-
-Start the backend in terminal 1, **from the repository root**:
+Start the backend in terminal 1, **from the repository root** (the same `TMDB_API_KEY` must be exported here too — the backend uses it for live streaming-platform lookups):
 
 ```bash
 source .venv/bin/activate
@@ -121,19 +118,19 @@ npm run build
 npm start
 ```
 
-### Optional TMDB enrichment
+### TMDB API key
 
-Export `TMDB_API_KEY` in the backend shell before launching Uvicorn. The variable expects a **TMDB v3 API key**, not a bearer token. Do not put it in a `NEXT_PUBLIC_` variable or commit it. The root `.env.example` documents the variable; Python does not automatically load `.env` files. The backend uses MovieLens TMDB IDs, short timeouts, concurrent detail requests and a bounded in-memory cache. Restart to clear the cache after service failures or key changes.
+`TMDB_API_KEY` is a **TMDB v3 API key** (not a bearer token), required in two places: `scripts/download_tmdb.py` (to build/refresh the catalog) and the backend shell (for live per-result streaming-platform lookups at request time — posters/overviews are already baked into the catalog, so they work without a key). Do not put it in a `NEXT_PUBLIC_` variable or commit it. The root `.env.example` documents the variable; Python does not automatically load `.env` files, so `export` it in whichever shell runs the script or Uvicorn.
 
-TMDB adds only display posters and synopses; the TF-IDF model remains title/genre-based. No live key was available during verification, so network failures were tested with mocks. This product uses the TMDB API but is not endorsed or certified by TMDB. Review TMDB attribution/branding requirements before publicly releasing an enriched deployment.
+Without a key, the app still runs against whatever catalog was last downloaded, just without live `platforms` tags on results. Failures in the platform lookup are caught and simply leave `platforms` empty; they never affect recommendations or scores. This product uses the TMDB API but is not endorsed or certified by TMDB. Review TMDB attribution/branding requirements before publicly releasing a deployment.
 
 `frontend/.env.example` documents optional server-side `BACKEND_URL`. Copy it to `frontend/.env.local` only if changing the default backend address. Production deployment would require separately hosting Python and Next.js and configuring this value; no deployment is claimed here.
 
 ## Dataset and assets
 
-[MovieLens latest-small](https://grouplens.org/datasets/movielens/latest/) is published by GroupLens for education/development. The snapshot contains 9,742 movies and ends in 2018. V1 uses `movies.csv` and `links.csv`, not ratings or user tags. MovieLens lacks plot summaries, directors and official posters in these files. Original terms are saved as `backend/data/README.txt`; dataset files are ignored by Git and retain their own terms.
+Movie and series metadata, posters, and streaming-platform info come from [TMDB](https://www.themoviedb.org/) via its public API — genres, overviews, release dates, popularity/vote scores, and `poster_path` images are pulled directly by `scripts/download_tmdb.py` at download time (see `backend/data/tmdb-manifest.json` for the source URLs and download timestamp of the last refresh). Data terms are separate from application code; review [TMDB's API terms](https://www.themoviedb.org/documentation/api/terms-of-use) before a public deployment.
 
-The download fallback is the public [smanihwr mirror](https://github.com/smanihwr/ml-latest-small) pinned to commit `ba3cd91761e54faa64483456b619d1a1f4d70971`. Provenance is explicit, and the downloader does not silently substitute data.
+The original [MovieLens latest-small](https://grouplens.org/datasets/movielens/latest/) dataset (9,742 movies, frozen in 2018) and TVmaze's series API powered v1 of this project. They're no longer used by the running app — `scripts/download_data.py` and `scripts/download_series.py` are kept for historical reference only, since the notebook and evaluation report still document that original model.
 
 The triptych in `frontend/public/art/cinematic-triptych.png` is original generated genre artwork, not an official film poster. Its prompt and the UI concept are documented in `docs/DESIGN.md`. Generated art is separate from the deterministic recommendation engine.
 
@@ -152,14 +149,14 @@ curl http://127.0.0.1:8000/health
 curl 'http://127.0.0.1:8000/movies/search?q=interstellar'
 curl -X POST http://127.0.0.1:8000/recommend \
   -H 'Content-Type: application/json' \
-  -d '{"movie_ids":[109487,79132],"limit":10}'
+  -d '{"movie_ids":[872585],"limit":10}'
 ```
 
-The response wraps `recommendations` and `model`. Each result includes `id`, `title`, `year`, `genres`, nullable `poster_url` and `overview`, `score`, `shared_genres`, `shared_features` (term/contribution pairs), `reasons`, `explanation`, and `selected_titles`. FastAPI’s `/docs` shows the complete generated schema.
+The response wraps `recommendations` and `model`. Each result includes `id`, `media_type`, `title`, `year`, `genres`, nullable `poster_url` and `overview`, `platforms` (live streaming providers, empty without a TMDB key or if none found), the blended `score` and the raw `content_score`, `shared_genres`, `shared_features` (term/contribution pairs that sum to `content_score`), `reasons`, `explanation`, and `selected_titles`. FastAPI’s `/docs` shows the complete generated schema.
 
 ## Actual recommendation example
 
-Interstellar + Inception → **Strange Days (1995)**, cosine **0.698319**, displayed **69.8% match**. Shared genres: Sci-Fi, Action, Crime, Drama, Mystery and Thriller. Sci-Fi contributes 0.291049; Mystery contributes 0.143157. All six contributing terms reconstruct the score. This is not a predicted rating or probability of enjoyment.
+Recommending from **Oppenheimer (2023)** currently surfaces recent, well-matched dramas from the last couple of years, each tagged with real platforms like `["Netflix"]` or `["Amazon Prime Video", ...]` pulled live from TMDB — since the catalog is refreshed by re-running `scripts/download_tmdb.py`, exact titles and scores shift over time by design (that's the fix for the old frozen-2018 behavior). Every result's `shared_features` still sum exactly to its `content_score`, so the taste-matching part of the ranking stays fully reconstructible; `score` additionally folds in a popularity/recency boost. Neither figure is a predicted rating or probability of enjoyment.
 
 See [LEARNING.md](LEARNING.md) for the numerical walkthrough and [evaluation](docs/EVALUATION.md) for multiple profiles and limitations. Regenerate with:
 
@@ -181,7 +178,7 @@ npm run typecheck
 npm run build
 ```
 
-Tests cover search, result count, ordering, exclusion, deduplication, score range, manual cosine agreement, invalid IDs/types/limits, health and optional TMDB failure. Browser verification covers search → multiple favorites → recommendations → explanation → remove → regenerate, plus mobile layout, keyboard search and the educational page. Screenshots above are from the running app. See `docs/QA.md` for verification details and limitations.
+Tests cover search, result count, ordering, exclusion, deduplication, score range, the content/popularity/recency blend, invalid IDs/types/limits, health, and optional/failed platform lookups — all against a small synthetic catalog built in-test, so the suite needs no TMDB key or downloaded data. Browser verification covers search → multiple favorites → recommendations → explanation → remove → regenerate, plus mobile layout, keyboard search and the educational page. Screenshots above are from the running app (pre-dating the TMDB catalog switch). See `docs/QA.md` for verification details and limitations.
 
 ## Project structure
 
@@ -193,15 +190,15 @@ frontend/
   types/movie.ts       Movie and recommendation contracts
   public/art/          Original illustrative art
 backend/
-  app/data.py          Dataset loading and preprocessing
-  app/recommender.py   TF-IDF, averaging, cosine and explanations
+  app/data.py          Catalog loading and preprocessing
+  app/recommender.py   TF-IDF, popularity/recency blend, explanations
   app/schemas.py       Pydantic contracts
   app/main.py          FastAPI endpoints and startup
-  app/enrichment.py    Optional TMDB display data
-  data/                Downloaded CSVs, provenance and original terms
-  tests/               API and algorithm tests
-notebooks/             Executed learning notebook
-scripts/               Dataset download, notebook source and evaluation
+  app/enrichment.py    Live per-result streaming-platform lookups
+  data/                Downloaded catalog JSON and manifest (git-ignored)
+  tests/               API and algorithm tests (synthetic catalog, no key needed)
+notebooks/             Executed learning notebook (documents the original MovieLens-only model)
+scripts/               download_tmdb.py (live), plus legacy MovieLens/TVmaze scripts kept for history
 docs/                 Design, screenshots and evaluation evidence
 README.md              Setup and portfolio overview
 LEARNING.md            Beginner guide and interview preparation
