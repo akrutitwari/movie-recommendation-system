@@ -15,16 +15,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='CineMatch API', version='1.0.0', lifespan=lifespan)
 
 @app.get('/health', response_model=Health)
+@app.get('/api/health', response_model=Health, include_in_schema=False)
 def health(request: Request):
     model = request.app.state.recommender
     return {'status': 'ok', 'movies': int((model.movies.media_type == 'movie').sum()), 'series': int((model.movies.media_type == 'series').sum()), 'titles': len(model.movies), 'features': model.matrix.shape[1]}
 
 @app.get('/titles/search', response_model=list[Movie])
 @app.get('/movies/search', response_model=list[Movie])
+@app.get('/api/titles/search', response_model=list[Movie], include_in_schema=False)
+@app.get('/api/movies/search', response_model=list[Movie], include_in_schema=False)
 def search(request: Request, q: str = Query(min_length=1, max_length=100), limit: int = Query(default=8, ge=1, le=20)):
     return request.app.state.recommender.search(q, limit)
 
 @app.post('/recommend', response_model=RecommendResponse)
+@app.post('/api/recommend', response_model=RecommendResponse, include_in_schema=False)
 def recommend(body: RecommendRequest, request: Request):
     model = request.app.state.recommender
     try:

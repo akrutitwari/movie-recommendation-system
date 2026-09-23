@@ -1,0 +1,16 @@
+{
+  "source": "TMDB",
+  "terms_url": "https://www.themoviedb.org/documentation/api/terms-of-use",
+  "sources": [
+    "https://api.themoviedb.org/3/movie/popular",
+    "https://api.themoviedb.org/3/movie/top_rated",
+    "https://api.themoviedb.org/3/discover/movie",
+    "https://api.themoviedb.org/3/tv/popular",
+    "https://api.themoviedb.org/3/tv/top_rated",
+    "https://api.themoviedb.org/3/discover/tv"
+  ],
+  "downloaded_at": "2026-09-23T15:30:17.329398+00:00",
+  "titles": 1058,
+  "sha256": "7b3e4bf8b6c6eff8d4fd7b959684b570d0fc826b3939f87dc9d93ecd951e8638",
+  "note": "This product uses the TMDB API but is not endorsed or certified by TMDB."
+}
