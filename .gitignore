@@ -19,3 +19,7 @@ backend/data/series-manifest.json
 backend/data/tmdb_catalog.json
 backend/data/tmdb_catalog.json.tmp
 backend/data/tmdb-manifest.json
+.vercel
+.env
+.env.local
+.env.*.local
