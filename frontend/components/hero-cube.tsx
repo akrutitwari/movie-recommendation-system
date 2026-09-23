@@ -122,6 +122,7 @@ export default function HeroCube({ gender = "male" }: HeroCharacterProps) {
             src={`/character-poses/${gender}/${pose}.webp`}
             alt=""
             draggable={false}
+            unoptimized
             width={420}
             height={500}
             style={{ width: "100%", height: "100%" }}
